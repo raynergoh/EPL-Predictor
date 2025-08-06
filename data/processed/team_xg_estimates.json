@@ -5,7 +5,7 @@
     "home_away": "A",
     "predicted_lineup": [
       "David Raya",
-      "Jurri\u00ebn Timber",
+      "Ben White",
       "Gabriel",
       "William Saliba",
       "Myles Lewis-Skelly",
@@ -16,17 +16,17 @@
       "Kai Havertz",
       "Martinelli"
     ],
-    "team_xg_sum": 39.101,
-    "team_xg_avg": 3.555,
-    "team_xg_sum_adj": 37.146,
-    "team_xg_avg_adj": 3.377
+    "team_xg_sum": 38.222,
+    "team_xg_avg": 3.475,
+    "team_xg_sum_adj": 36.311,
+    "team_xg_avg_adj": 3.301
   },
   {
     "team": "Aston Villa",
     "opponent": "Newcastle United",
     "home_away": "H",
     "predicted_lineup": [
-      "Joe Gauci",
+      "Marco Bizot",
       "Matthew Cash",
       "Ezri Konsa Ngoyo",
       "Tyrone Mings",
@@ -48,7 +48,7 @@
     "opponent": "Liverpool",
     "home_away": "A",
     "predicted_lineup": [
-      "Neto",
+      "Dorde Petrovic",
       "Adam Smith",
       "Illia Zabarnyi",
       "Marcos Senesi",
@@ -75,17 +75,17 @@
       "Nathan Collins",
       "Sepp van den Berg",
       "Keane Lewis-Potter",
-      "Antoni Milambo",
+      "Mathias Jensen",
       "Ehor Yarmolyuk",
       "Mikkel Damsgaard",
-      "Bryan Mbeumo",
-      "Yoane Wissa",
+      "Fabio Carvalho",
+      "Thiago",
       "Kevin Schade"
     ],
-    "team_xg_sum": 55.549,
-    "team_xg_avg": 5.05,
-    "team_xg_sum_adj": 52.771,
-    "team_xg_avg_adj": 4.797
+    "team_xg_sum": 23.911,
+    "team_xg_avg": 2.174,
+    "team_xg_sum_adj": 22.715,
+    "team_xg_avg_adj": 2.065
   },
   {
     "team": "Brighton",
@@ -93,21 +93,21 @@
     "home_away": "H",
     "predicted_lineup": [
       "Bart Verbruggen",
-      "Diego Coppola",
+      "Mats Wieffer",
       "Jan-Paul van Hecke",
-      "Olivier Boscagli",
-      "Ferdi Kadioglu",
+      "Lewis Dunk",
+      "Maxim De Cuyper",
       "Carlos Baleba",
       "Yasin Ayari",
-      "Maxim De Cuyper",
-      "Georginio Rutter",
-      "Danny Welbeck",
-      "Kaoru Mitoma"
+      "Yankuba Minteh",
+      "Matt O\u2019Riley",
+      "Kaoru Mitoma",
+      "Georginio Rutter"
     ],
-    "team_xg_sum": 32.075,
-    "team_xg_avg": 2.916,
-    "team_xg_sum_adj": 35.282,
-    "team_xg_avg_adj": 3.207
+    "team_xg_sum": 28.893,
+    "team_xg_avg": 2.627,
+    "team_xg_sum_adj": 31.782,
+    "team_xg_avg_adj": 2.889
   },
   {
     "team": "Burnley",
@@ -116,7 +116,7 @@
     "predicted_lineup": [
       "Max Wei\u00df",
       "Kyle Walker",
-      "Axel Tuanzebe",
+      "Hjalmar Ekdal",
       "Maxime Esteve",
       "Quilindschy Hartman",
       "Josh Cullen",
@@ -124,12 +124,12 @@
       "Marcus Edwards",
       "Hannibal Mejbri",
       "Jaidon Anthony",
-      "Zian Flemming"
+      "Jacob Bruun Larsen"
     ],
-    "team_xg_sum": 0.464,
-    "team_xg_avg": 0.042,
-    "team_xg_sum_adj": 0.44,
-    "team_xg_avg_adj": 0.04
+    "team_xg_sum": 0.11,
+    "team_xg_avg": 0.01,
+    "team_xg_sum_adj": 0.104,
+    "team_xg_avg_adj": 0.009
   },
   {
     "team": "Chelsea",
@@ -163,17 +163,17 @@
       "Maxence Lacroix",
       "Marc Guehi",
       "Daniel Mu\u00f1oz",
-      "Will Hughes",
+      "Daichi Kamada",
       "Adam Wharton",
       "Tyrick Mitchell",
       "Ismaila Sarr",
       "Eberechi Eze",
       "Jean-Philippe Mateta"
     ],
-    "team_xg_sum": 53.908,
-    "team_xg_avg": 4.901,
-    "team_xg_sum_adj": 51.213,
-    "team_xg_avg_adj": 4.656
+    "team_xg_sum": 53.963,
+    "team_xg_avg": 4.906,
+    "team_xg_sum_adj": 51.265,
+    "team_xg_avg_adj": 4.66
   },
   {
     "team": "Everton",
@@ -229,17 +229,17 @@
       "Joe Rodon",
       "Pascal Struijk",
       "Gabriel Gudmundsson",
+      "Sean Longstaff",
       "Ethan Ampadu",
       "Ao Tanaka",
       "Daniel James",
-      "Brenden Aaronson",
-      "Degnand Wilfried Gnonto",
-      "Jo\u00ebl Piroe"
+      "Jo\u00ebl Piroe",
+      "Degnand Wilfried Gnonto"
     ],
-    "team_xg_sum": 0.0,
-    "team_xg_avg": 0.0,
-    "team_xg_sum_adj": 0.0,
-    "team_xg_avg_adj": 0.0
+    "team_xg_sum": 0.407,
+    "team_xg_avg": 0.037,
+    "team_xg_sum_adj": 0.447,
+    "team_xg_avg_adj": 0.041
   },
   {
     "team": "Liverpool",
@@ -247,7 +247,7 @@
     "home_away": "H",
     "predicted_lineup": [
       "Alisson",
-      "Jeremie Frimpong",
+      "Conor Bradley",
       "Ibrahima Konat\u00e9",
       "Virgil van Dijk",
       "Milos Kerkez",
@@ -255,13 +255,13 @@
       "Curtis Jones",
       "Alexis Mac Allister",
       "Mohamed Salah",
-      "Luis D\u00edaz",
-      "Florian Wirtz"
+      "Florian Wirtz",
+      "Cody Gakpo"
     ],
-    "team_xg_sum": 60.632,
-    "team_xg_avg": 5.512,
-    "team_xg_sum_adj": 66.695,
-    "team_xg_avg_adj": 6.063
+    "team_xg_sum": 58.012,
+    "team_xg_avg": 5.274,
+    "team_xg_sum_adj": 63.813,
+    "team_xg_avg_adj": 5.801
   },
   {
     "team": "Manchester City",
@@ -292,20 +292,20 @@
     "predicted_lineup": [
       "Altay Bayindir",
       "Leny Yoro",
-      "Harry Maguire",
-      "Lisandro Mart\u00ednez",
-      "Dalot",
-      "Manuel Ugarte",
-      "Bruno Fernandes",
-      "Patrick Dorgu",
+      "Matthijs de Ligt",
+      "Luke Shaw",
       "Amad Diallo",
-      "Matheus Cunha",
-      "Rasmus H\u00f8jlund"
+      "Manuel Ugarte",
+      "Casemiro",
+      "Patrick Dorgu",
+      "Bryan Mbeumo",
+      "Bruno Fernandes",
+      "Matheus Cunha"
     ],
-    "team_xg_sum": 30.836,
-    "team_xg_avg": 2.803,
-    "team_xg_sum_adj": 33.92,
-    "team_xg_avg_adj": 3.084
+    "team_xg_sum": 39.417,
+    "team_xg_avg": 3.583,
+    "team_xg_sum_adj": 43.358,
+    "team_xg_avg_adj": 3.942
   },
   {
     "team": "Newcastle United",
@@ -313,21 +313,21 @@
     "home_away": "A",
     "predicted_lineup": [
       "Nick Pope",
-      "Valentino Livramento",
+      "Kieran Trippier",
       "Fabian Sch\u00e4r",
       "Dan Burn",
-      "Lewis Hall",
+      "Valentino Livramento",
       "Bruno Guimar\u00e3es",
       "Sandro Tonali",
       "Joelinton",
       "Jacob Murphy",
-      "Alexander Isak",
-      "Anthony Gordon"
+      "Anthony Gordon",
+      "Harvey Barnes"
     ],
-    "team_xg_sum": 58.995,
-    "team_xg_avg": 5.363,
-    "team_xg_sum_adj": 56.045,
-    "team_xg_avg_adj": 5.095
+    "team_xg_sum": 43.955,
+    "team_xg_avg": 3.996,
+    "team_xg_sum_adj": 41.757,
+    "team_xg_avg_adj": 3.796
   },
   {
     "team": "Nottingham Forest",
@@ -356,22 +356,22 @@
     "opponent": "West Ham",
     "home_away": "H",
     "predicted_lineup": [
-      "Anthony Patterson",
+      "Robin Roefs",
       "Trai Hume",
       "Danny Ballard",
       "Jenson Seelt",
       "Reinildo Mandava",
-      "Patrick Roberts",
-      "Noah Sadiki",
       "Habib Diarra",
-      "Romaine Mundle",
+      "Noah Sadiki",
+      "Enzo Le F\u00e9e",
+      "Chemsdine Talbi",
       "Eliezer Mayenda",
-      "Enzo Le F\u00e9e"
+      "Simon Adingra"
     ],
-    "team_xg_sum": 0.0,
-    "team_xg_avg": 0.0,
-    "team_xg_sum_adj": 0.0,
-    "team_xg_avg_adj": 0.0
+    "team_xg_sum": 3.138,
+    "team_xg_avg": 0.285,
+    "team_xg_sum_adj": 3.452,
+    "team_xg_avg_adj": 0.314
   },
   {
     "team": "Tottenham",
@@ -382,18 +382,18 @@
       "Pedro Porro",
       "Cristian Romero",
       "Micky van de Ven",
-      "Destiny Udogie",
+      "Djed Spence",
       "Lucas Bergvall",
       "Rodrigo Bentancur",
       "Mohammed Kudus",
-      "James Maddison",
-      "Son",
+      "Pape Sarr",
+      "Mathys Tel",
       "Dominic Solanke"
     ],
-    "team_xg_sum": 31.955,
-    "team_xg_avg": 2.905,
-    "team_xg_sum_adj": 35.151,
-    "team_xg_avg_adj": 3.196
+    "team_xg_sum": 33.272,
+    "team_xg_avg": 3.025,
+    "team_xg_sum_adj": 36.6,
+    "team_xg_avg_adj": 3.327
   },
   {
     "team": "West Ham",
@@ -402,20 +402,20 @@
     "predicted_lineup": [
       "Alphonse Areola",
       "Jean-Clair Todibo",
-      "Konstantinos Mavropanos",
+      "Nayef Aguerd",
       "Max Kilman",
       "Aaron Wan-Bissaka",
-      "Edson \u00c1lvarez",
+      "Tomas Soucek",
       "James Ward-Prowse",
-      "Oliver Scarles",
+      "El Hadji Diouf",
       "Jarrod Bowen",
       "Niclas F\u00fcllkrug",
       "Lucas Paquet\u00e1"
     ],
-    "team_xg_sum": 23.871,
-    "team_xg_avg": 2.17,
-    "team_xg_sum_adj": 22.678,
-    "team_xg_avg_adj": 2.062
+    "team_xg_sum": 29.822,
+    "team_xg_avg": 2.711,
+    "team_xg_sum_adj": 28.331,
+    "team_xg_avg_adj": 2.576
   },
   {
     "team": "Wolverhampton Wanderers",
@@ -426,7 +426,7 @@
       "Matt Doherty",
       "Emmanuel Agbadou",
       "Toti",
-      "Nelson Semedo",
+      "Ki-Jana Hoever",
       "Jo\u00e3o Gomes",
       "Andr\u00e9",
       "Rodrigo Gomes",

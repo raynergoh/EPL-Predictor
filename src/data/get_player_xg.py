@@ -3,7 +3,7 @@ import asyncio
 import pandas as pd
 from understat import Understat
 
-async def get_league_players(league="EPL", season=2024, out_csv="data/understat_player_xg.csv"):
+async def get_league_players(league="EPL", season=2024, out_csv="data/raw/understat_player_xg.csv"):
     async with aiohttp.ClientSession() as session:
         understat = Understat(session)
         players = await understat.get_league_players(league, season)

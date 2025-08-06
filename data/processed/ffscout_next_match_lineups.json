@@ -5,7 +5,7 @@
     "home_away": "A",
     "predicted_lineup": [
       "David Raya",
-      "Jurri\u00ebn Timber",
+      "Ben White",
       "Gabriel",
       "William Saliba",
       "Myles Lewis-Skelly",
@@ -22,7 +22,7 @@
     "opponent": "Newcastle United",
     "home_away": "H",
     "predicted_lineup": [
-      "Joe Gauci",
+      "Marco Bizot",
       "Matthew Cash",
       "Ezri Konsa Ngoyo",
       "Tyrone Mings",
@@ -40,7 +40,7 @@
     "opponent": "Liverpool",
     "home_away": "A",
     "predicted_lineup": [
-      "Neto",
+      "Dorde Petrovic",
       "Adam Smith",
       "Illia Zabarnyi",
       "Marcos Senesi",
@@ -63,11 +63,11 @@
       "Nathan Collins",
       "Sepp van den Berg",
       "Keane Lewis-Potter",
-      "Antoni Milambo",
+      "Mathias Jensen",
       "Ehor Yarmolyuk",
       "Mikkel Damsgaard",
-      "Bryan Mbeumo",
-      "Yoane Wissa",
+      "Fabio Carvalho",
+      "Thiago",
       "Kevin Schade"
     ]
   },
@@ -77,16 +77,16 @@
     "home_away": "H",
     "predicted_lineup": [
       "Bart Verbruggen",
-      "Diego Coppola",
+      "Mats Wieffer",
       "Jan-Paul van Hecke",
-      "Olivier Boscagli",
-      "Ferdi Kadioglu",
+      "Lewis Dunk",
+      "Maxim De Cuyper",
       "Carlos Baleba",
       "Yasin Ayari",
-      "Maxim De Cuyper",
-      "Georginio Rutter",
-      "Danny Welbeck",
-      "Kaoru Mitoma"
+      "Yankuba Minteh",
+      "Matt O\u2019Riley",
+      "Kaoru Mitoma",
+      "Georginio Rutter"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "predicted_lineup": [
       "Max Wei\u00df",
       "Kyle Walker",
-      "Axel Tuanzebe",
+      "Hjalmar Ekdal",
       "Maxime Esteve",
       "Quilindschy Hartman",
       "Josh Cullen",
@@ -104,7 +104,7 @@
       "Marcus Edwards",
       "Hannibal Mejbri",
       "Jaidon Anthony",
-      "Zian Flemming"
+      "Jacob Bruun Larsen"
     ]
   },
   {
@@ -135,7 +135,7 @@
       "Maxence Lacroix",
       "Marc Guehi",
       "Daniel Mu\u00f1oz",
-      "Will Hughes",
+      "Daichi Kamada",
       "Adam Wharton",
       "Tyrick Mitchell",
       "Ismaila Sarr",
@@ -189,12 +189,12 @@
       "Joe Rodon",
       "Pascal Struijk",
       "Gabriel Gudmundsson",
+      "Sean Longstaff",
       "Ethan Ampadu",
       "Ao Tanaka",
       "Daniel James",
-      "Brenden Aaronson",
-      "Degnand Wilfried Gnonto",
-      "Jo\u00ebl Piroe"
+      "Jo\u00ebl Piroe",
+      "Degnand Wilfried Gnonto"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "home_away": "H",
     "predicted_lineup": [
       "Alisson",
-      "Jeremie Frimpong",
+      "Conor Bradley",
       "Ibrahima Konat\u00e9",
       "Virgil van Dijk",
       "Milos Kerkez",
@@ -211,8 +211,8 @@
       "Curtis Jones",
       "Alexis Mac Allister",
       "Mohamed Salah",
-      "Luis D\u00edaz",
-      "Florian Wirtz"
+      "Florian Wirtz",
+      "Cody Gakpo"
     ]
   },
   {
@@ -240,15 +240,15 @@
     "predicted_lineup": [
       "Altay Bayindir",
       "Leny Yoro",
-      "Harry Maguire",
-      "Lisandro Mart\u00ednez",
-      "Dalot",
-      "Manuel Ugarte",
-      "Bruno Fernandes",
-      "Patrick Dorgu",
+      "Matthijs de Ligt",
+      "Luke Shaw",
       "Amad Diallo",
-      "Matheus Cunha",
-      "Rasmus H\u00f8jlund"
+      "Manuel Ugarte",
+      "Casemiro",
+      "Patrick Dorgu",
+      "Bryan Mbeumo",
+      "Bruno Fernandes",
+      "Matheus Cunha"
     ]
   },
   {
@@ -257,16 +257,16 @@
     "home_away": "A",
     "predicted_lineup": [
       "Nick Pope",
-      "Valentino Livramento",
+      "Kieran Trippier",
       "Fabian Sch\u00e4r",
       "Dan Burn",
-      "Lewis Hall",
+      "Valentino Livramento",
       "Bruno Guimar\u00e3es",
       "Sandro Tonali",
       "Joelinton",
       "Jacob Murphy",
-      "Alexander Isak",
-      "Anthony Gordon"
+      "Anthony Gordon",
+      "Harvey Barnes"
     ]
   },
   {
@@ -292,17 +292,17 @@
     "opponent": "West Ham",
     "home_away": "H",
     "predicted_lineup": [
-      "Anthony Patterson",
+      "Robin Roefs",
       "Trai Hume",
       "Danny Ballard",
       "Jenson Seelt",
       "Reinildo Mandava",
-      "Patrick Roberts",
-      "Noah Sadiki",
       "Habib Diarra",
-      "Romaine Mundle",
+      "Noah Sadiki",
+      "Enzo Le F\u00e9e",
+      "Chemsdine Talbi",
       "Eliezer Mayenda",
-      "Enzo Le F\u00e9e"
+      "Simon Adingra"
     ]
   },
   {
@@ -314,12 +314,12 @@
       "Pedro Porro",
       "Cristian Romero",
       "Micky van de Ven",
-      "Destiny Udogie",
+      "Djed Spence",
       "Lucas Bergvall",
       "Rodrigo Bentancur",
       "Mohammed Kudus",
-      "James Maddison",
-      "Son",
+      "Pape Sarr",
+      "Mathys Tel",
       "Dominic Solanke"
     ]
   },
@@ -330,12 +330,12 @@
     "predicted_lineup": [
       "Alphonse Areola",
       "Jean-Clair Todibo",
-      "Konstantinos Mavropanos",
+      "Nayef Aguerd",
       "Max Kilman",
       "Aaron Wan-Bissaka",
-      "Edson \u00c1lvarez",
+      "Tomas Soucek",
       "James Ward-Prowse",
-      "Oliver Scarles",
+      "El Hadji Diouf",
       "Jarrod Bowen",
       "Niclas F\u00fcllkrug",
       "Lucas Paquet\u00e1"
@@ -350,7 +350,7 @@
       "Matt Doherty",
       "Emmanuel Agbadou",
       "Toti",
-      "Nelson Semedo",
+      "Ki-Jana Hoever",
       "Jo\u00e3o Gomes",
       "Andr\u00e9",
       "Rodrigo Gomes",

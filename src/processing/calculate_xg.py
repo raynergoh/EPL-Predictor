@@ -1,6 +1,6 @@
 import pandas as pd
 
-def calculate_team_xg(team_fixtures_lineups, player_xg_csv="data/understat_player_xg.csv"):
+def calculate_team_xg(team_fixtures_lineups, player_xg_csv="data/raw/understat_player_xg.csv"):
     """
     Calculate xG values for each team (based on predicted lineups), return enriched list of dicts.
     """
@@ -47,6 +47,50 @@ def calculate_team_xg(team_fixtures_lineups, player_xg_csv="data/understat_playe
         })
 
     return team_xg_estimates
+
+def merge_xg_to_fixtures(team_xg_estimates):
+    # Convert to DataFrame for easy pivot/merge
+    df = pd.DataFrame(team_xg_estimates)
+
+    # Split into home and away based on home_away flag
+    home_df = df[df['home_away'] == 'H'].copy()
+    away_df = df[df['home_away'] == 'A'].copy()
+
+    # Rename columns for clarity before merge
+    home_df = home_df.rename(columns={
+        'team': 'home_team',
+        'opponent': 'away_team',
+        'team_xg_avg_adj': 'home_avg_xg',
+        'predicted_lineup': 'home_predicted_lineup'
+    })
+
+    away_df = away_df.rename(columns={
+        'team': 'away_team',
+        'opponent': 'home_team',
+        'team_xg_avg_adj': 'away_avg_xg',
+        'predicted_lineup': 'away_predicted_lineup'
+    })
+
+    # Merge on fixture keys (home_team and away_team)
+    merged = pd.merge(home_df, away_df,
+                      on=['home_team', 'away_team'],
+                      suffixes=('_home', '_away'))
+
+    # Select & reorder columns in desired format
+    fixtures_df = merged[['home_team', 'away_team', 'home_predicted_lineup',
+                          'away_predicted_lineup', 'home_avg_xg', 'away_avg_xg']]
+
+    # Rename columns (if you want to match your spec)
+    fixtures_df.columns = ['team', 'opponent', 'home_predicted_lineup',
+                           'away_predicted_lineup', 'home_avg_xg', 'away_avg_xg']
+    
+    # Add home_away flag as "H" because this row represents the home side
+    fixtures_df = fixtures_df.copy()
+    fixtures_df['home_away'] = 'H'
+
+    # Convert to list of dicts for json serialization
+    return fixtures_df.to_dict(orient='records')
+
 
 # If you want to allow direct script running:
 if __name__ == "__main__":
