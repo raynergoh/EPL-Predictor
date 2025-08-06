@@ -29,6 +29,11 @@
 
 ---
 
+## Trained Model Summary
+![Model Summary](model_summary.png)
+
+---
+
 ## Getting Started
 
 1. **Install dependencies:**  
