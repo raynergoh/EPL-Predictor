@@ -2,3 +2,6 @@ requests
 beautifulsoup4
 pandas
 lxml
+statsmodels
+scipy
+numpy
