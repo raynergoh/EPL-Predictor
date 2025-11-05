@@ -1,79 +1,166 @@
 # AI Copilot Instructions - EPL-Predictor
 
-This is a **Poisson regression-based football prediction system** that forecasts EPL match outcomes using lineup-based expected goals (xG), rolling team form, and historical data.
+This is a **Poisson regression-based football prediction system** that forecasts EPL match outcomes using team attack/defense strengths, home advantage, and Dixon-Coles time-weighting.
 
 ## Architecture Overview
 
-The project follows a **data pipeline architecture** with five key stages:
+The project follows a **simplified data pipeline architecture**:
 
-1. **Data Collection** (`src/scraping/`, `src/data/`) → JSON/CSV
-2. **Feature Engineering** (`src/processing/`, `src/features/`) → Fixture-level features
-3. **Model Training** (`src/train/`) → Pickle-serialized Poisson models
-4. **Inference** (`src/predict/`) → Match predictions & probabilities
-5. **Main Orchestrator** (`src/main.py`) → Runs entire pipeline end-to-end
+1. **Data Collection** (`src/data/`) → Fetches historical match data from football-data.co.uk
+2. **Model Training** (`src/train/`) → Trains Poisson GLM with Dixon-Coles time-weighting
+3. **Fixture Scraping** (`src/weekly/`) → Fetches upcoming fixtures from Premier League API
+4. **Prediction** (`src/weekly/`, `src/predict/`) → Generates match outcome probabilities
+5. **Main Orchestrator** (`main.py`) → Runs entire pipeline: fetch data → train → predict
 
-### Data Flow
+### Actual Data Flow
 
 ```
-scrape_fixtures_lineups() → team_fixtures_lineups.json
-  ↓ (player name cleaning via cleaning.py)
-calculate_team_xg() → team_xg_estimates.json (per-team, per-match xG)
-  ↓ (merge home/away)
-team_fixture_xg_estimates.json → predict_upcoming_matches()
-  ↓ (load rolling form stats from historical data)
-Predict match outcome + scoreline probabilities
+football-data.co.uk → epl_historical_results.csv
+  ↓
+Train Poisson GLM (with time-weighting)
+  ↓
+Save models: poisson_glm_model.pkl, poisson_coefficients.pkl
+  ↓
+Premier League API → Fetch upcoming fixtures
+  ↓
+Load model → Predict expected goals → Calculate probabilities
+  ↓
+Generate HTML report (auto-opens in browser)
 ```
 
-**Key Files by Stage:**
-- Scraping: `src/scraping/scrape_fixtures_lineups.py` (Fantasy Football Scout)
-- xG Calculation: `src/processing/calculate_xg.py` (player stats → team xG with H/A adjustment)
-- Feature Building: `src/features/build_features.py` (historical xG + rolling form stats)
-- Model Training: `src/train/poisson_model.py` (Poisson GLM via statsmodels)
-- Prediction: `src/predict/predict_upcoming.py` (uses simulate_match.py for outcome probabilities)
+**Key Files:**
+- **Data fetching**: `src/data/fetch_historical_data.py` (football-data.co.uk)
+- **Model training**: `src/train/train_poisson_model.py` (Poisson GLM with time-weighting)
+- **Fixture scraping**: `src/weekly/scrape_fixtures.py` (Premier League API)
+- **Prediction pipeline**: `src/weekly/predict_weekly.py` (orchestrates predictions)
+- **Probability calculation**: `src/predict/generate_probabilities.py` (Poisson PMF)
+- **Main entry point**: `main.py` (end-to-end workflow)
 
 ## Critical Patterns & Conventions
 
-### 1. Data Column Naming & Conventions
+### 1. Historical Data Format
 
-- **Historical results CSV** (`data/raw/epl_historical_results.csv`): `home_goals`, `away_goals`, `home_xg`, `away_xg`, `home_team`, `away_team`, `date`
-- **Fixture-level xG JSON** formats as list of dicts: `home_team`, `away_team`, `home_avg_xg`, `away_avg_xg`, `home_predicted_lineup`, `away_predicted_lineup`
-- **Team xG estimates** format: `team`, `opponent`, `home_away` (H/A flag), `team_xg_avg_adj` (adjusted average xG)
-- **Rolling form features** use prefixes: `home_form_*` and `away_form_*` (e.g., `home_form_goals_scored`)
-- **Home field indicator**: Always `home_field = 1` in feature matrix
+**File**: `data/raw/epl_historical_results.csv`
 
-### 2. Home/Away Adjustment Pattern
+**Key columns**:
+- `Date`: Match date (YYYY-MM-DD format) - **CRITICAL for time-weighting**
+- `HomeTeam`, `AwayTeam`: Team names (football-data.co.uk format)
+- `FTHG`, `FTAG`: Full-time home/away goals
+- `Season`: Season code (e.g., "2425" for 2024/25)
 
-xG values are adjusted by `1.10` (home) or `0.95` (away) in `calculate_team_xg()`. This adjustment is **baked into** xG estimates before merging fixtures. Ensure this is applied once per team per match, not duplicated in feature engineering.
+**Team name format** (football-data.co.uk standard):
+- "Man City", "Man United" (NOT "Manchester City/United")
+- "Tottenham" (NOT "Tottenham Hotspur")
+- "Brighton" (NOT "Brighton & Hove Albion")
+- "Nott'm Forest" (NOT "Nottingham Forest")
+- "Wolves" (NOT "Wolverhampton Wanderers")
 
-### 3. Rolling Window Feature Engineering
+### 2. Poisson Model Architecture
 
-`build_features.py` and `predict_upcoming.py` both compute rolling averages independently:
-- `.groupby('team')` → separate home/away stats
-- `.rolling(window).mean().shift(1)` — **shift(1) is critical**: excludes current match to prevent data leakage
-- Default `rolling_window=5` (configurable parameter)
-- Missing form stats at season start filled with **median imputation**
+**Formula**: `goals ~ home + team + opponent`
 
-### 4. Model Input/Output Contract
+**Model structure**:
+- **Intercept** (α₀): Baseline goal rate
+- **home**: Home advantage coefficient (γ)
+- **team[T.TeamName]**: Attack strength relative to baseline team
+- **opponent[T.TeamName]**: Defense strength relative to baseline team
 
-**Training**: Features → `home_avg_xg`, `away_avg_xg`, `home_field`, `home_form_*`, `away_form_*` → Poisson GLM with formula-based design matrix
-**Prediction**: Same feature schema required. Mismatch will raise `KeyError` or fail prediction silently.
+**Baseline team**: First alphabetically (usually Arsenal) has coefficient 0
+**All other teams**: Coefficients relative to baseline
 
-Models (`model_home.pkl`, `model_away.pkl`) are serialized with `pickle`. Regenerate when feature schema changes.
+**Expected goals formula**:
+```
+λ_home = exp(α₀ + α_team_home + β_opponent_away + γ)
+λ_away = exp(α₀ + α_team_away + β_opponent_home)
+```
 
-### 5. String Cleaning & Name Mapping
+### 3. Dixon-Coles Time-Weighting (CRITICAL)
 
-Use utilities in `src/utils/cleaning.py`:
-- `clean_team_name()`: Handles known aliases (e.g., "Brighton and Hove Albion" → "Brighton")
-- `clean_player_name()`: Parses "Surname (FirstName)" → "FirstName Surname"; maintains manual override map
-- Player xG lookups are **case-sensitive** and require exact name matches
+**Purpose**: Recent matches weighted more heavily than old matches
+
+**Formula**: `φ(t) = exp(-ξ * t)`
+- `t` = time elapsed since match (in half-weeks = 3.5 days)
+- `ξ` = decay parameter (default 0.012 for modern EPL data)
+
+**Implementation**:
+- Time weights calculated in `calculate_time_weights(dates, xi=0.012)`
+- Weights duplicated for home/away rows (2 samples per match)
+- Passed to GLM via `freq_weights` parameter
+
+**Key insight**: 
+- ξ=0.012 means recent matches (2024-2025) have weight ≈1.0
+- Old matches (2005-2010) have weight ≈0.0
+- Effective sample size: ~469 (vs 15,284 unweighted)
+
+**Tuning**: Hyperparameter ξ should be optimized via cross-validation for your specific dataset
+
+### 4. Model Files
+
+**Location**: `models/`
+
+**Files**:
+- `poisson_glm_model.pkl`: Full statsmodels GLM object (use for predictions)
+- `poisson_coefficients.pkl`: Dictionary of extracted coefficients
+- `poisson_coefficients.json`: Human-readable coefficients with metadata
+
+**Metadata in coefficients**:
+- `intercept`, `home_advantage`: Scalar values
+- `team_attack`: Dict mapping team names to attack coefficients
+- `opponent_defense`: Dict mapping team names to defense coefficients
+- `time_weighted`: Boolean (True if Dixon-Coles weighting used)
+- `xi`: Decay parameter value (if time-weighted)
+- `trained_at`: ISO timestamp
+
+**When to retrain**:
+- New matchweek results added to historical data
+- Model file older than latest match in data
+- Hyperparameter tuning (changing ξ)
+
+### 5. Fixture API & Team Name Mapping
+
+**API**: `https://footballapi.pulselive.com/football/fixtures`
+
+**CRITICAL**: Premier League API returns different team names than football-data.co.uk
+
+**Name mapping** (in `scrape_fixtures.py` → `_normalize_team_name()`):
+```python
+'Manchester City' → 'Man City'
+'Manchester United' → 'Man United'
+'Tottenham Hotspur' → 'Tottenham'
+'Brighton & Hove Albion' → 'Brighton'
+'Nottingham Forest' → 'Nott\'m Forest'
+'Wolverhampton Wanderers' → 'Wolves'
+'Leeds United' → 'Leeds'
+'Leicester City' → 'Leicester'
+'AFC Bournemouth' → 'Bournemouth'
+```
+
+**Why critical**: Model trained on football-data.co.uk names. Mismatch = unknown team = prediction fails.
 
 ### 6. Prediction Probability Computation
 
-`simulate_match.py` uses Poisson PMF to generate outcome probabilities:
-- `lambda_home`, `lambda_away` = predicted expected goals (Poisson μ)
-- Probability matrix = outer product of two Poisson PMFs (0-6 goals)
-- Probabilities computed via: `home_win = lower_triangle_sum`, `draw = trace`, `away_win = upper_triangle_sum`
-- Output: Full 7×7 matrix + most likely scoreline + top-3 scorelines
+**Method**: Poisson distribution probability mass function (PMF)
+
+**Steps**:
+1. Predict expected goals: `λ_home`, `λ_away` from Poisson GLM
+2. Generate 7×7 probability matrix (0-6 goals each team)
+3. Each cell `P(home=i, away=j) = poisson.pmf(i, λ_home) * poisson.pmf(j, λ_away)`
+
+**Outcome probabilities**:
+- **Home win**: Sum of lower triangle (home_goals > away_goals)
+- **Draw**: Sum of diagonal (home_goals = away_goals)
+- **Away win**: Sum of upper triangle (home_goals < away_goals)
+
+**Implementation**: `src/predict/generate_probabilities.py` → `PoissonPredictor.predict()`
+
+### 7. Output Format
+
+**Location**: `data/weekly/predictions_mw{N}_{timestamp}.html`
+
+**Behavior**: 
+- **HTML only** (no JSON/CSV clutter)
+- **Auto-opens in browser** via `webbrowser.open()`
+- Contains: match predictions, probabilities, most likely scorelines
 
 ## Workflow Commands
 
@@ -83,73 +170,168 @@ All commands run from repository root:
 # Install dependencies
 pip install -r requirements.txt
 
-# Download historical EPL data (Understat async)
-python -m src.data.extract_historical_data
+# End-to-end prediction (RECOMMENDED - does everything)
+python3 main.py
+# This will:
+# 1. Fetch latest EPL data from football-data.co.uk
+# 2. Train Poisson GLM with time-weighting (if needed)
+# 3. Scrape upcoming fixtures from Premier League API
+# 4. Generate predictions and HTML report
+# 5. Auto-open HTML in browser
 
-# Build feature matrix from historical + xG
-python -m src.features.build_features
+# Optional: Specify matchweek
+python3 main.py --matchweek 15
 
-# Train Poisson models (GLM via statsmodels)
-python -m src.train.poisson_model
+# Optional: Force model retraining
+python3 main.py --retrain
 
-# End-to-end: scrape → xG → predict (recommended)
-python -m src.main
+# Train model only (for testing/tuning)
+python3 src/train/train_poisson_model.py
 
-# Single prediction (requires models + historical data)
-python -m src.predict.predict_upcoming
+# Hyperparameter tuning (find optimal ξ)
+python3 src/train/tune_xi.py
 ```
 
 ## Common Tasks & How-Tos
 
-**Add new rolling form feature:**
-1. Edit `build_features.py`: add computation in `create_team_stats()` groupby chain
-2. Ensure name follows `form_*` pattern
-3. Add to `feature_cols` list
-4. Retrain models
+**Update data after new matchweek results:**
+```bash
+python3 main.py
+# Automatically fetches latest data, retrains if needed, generates predictions
+```
 
-**Update historical data after matchweek:**
-1. Add new rows to `data/raw/epl_historical_results.csv`
-2. Rerun `python -m src.features.build_features` (regenerates rolling stats)
-3. Rerun `python -m src.train.poisson_model` (retrain with full data)
-4. Then `python -m src.main` for next predictions
+**Change time-weighting decay parameter:**
+1. Edit `src/train/train_poisson_model.py`
+2. Change default `xi=0.012` in `train_poisson_model()` function
+3. Retrain: `python3 src/train/train_poisson_model.py`
+4. Or use hyperparameter tuning to find optimal ξ
 
-**Debug missing player xG:**
-- Check `data/raw/understat_player_xg.csv` for name match
-- Verify scraped lineup names via `scrape_fixtures_lineups.py` output
-- Add manual mapping to `clean_player_name()` if name format differs
+**Disable time-weighting (for comparison):**
+```python
+# In train_poisson_model.py
+train_poisson_model(use_time_weighting=False)
+```
 
-**Analyze prediction outputs:**
-- Full scoreline probability matrix in `score_probabilities` (7×7 numpy array)
-- Most likely scoreline = argmax of matrix
-- Win probabilities sum to 1.0 (sanity check)
+**Add new team to mapping:**
+1. Edit `src/weekly/scrape_fixtures.py`
+2. Add to `_normalize_team_name()` dictionary
+3. Map Premier League API name → football-data.co.uk name
+
+**Debug prediction failures:**
+1. Check model was trained: `ls models/poisson_glm_model.pkl`
+2. Verify team names match: Check `scrape_fixtures.py` name mapping
+3. Ensure data is up-to-date: Check `data/raw/epl_historical_results.csv` last date
+4. Check terminal logs for API errors or missing fixtures
+
+**Analyze model coefficients:**
+```bash
+# View human-readable coefficients
+cat models/poisson_coefficients.json
+
+# Key metrics:
+# - home_advantage: Typically 0.15-0.25 (log scale)
+# - team_attack: Positive = strong attack, negative = weak attack
+# - opponent_defense: Positive = weak defense, negative = strong defense
+```
 
 ## External Dependencies & APIs
 
-- **BeautifulSoup4 + requests**: Scrapes Fantasy Football Scout for predicted lineups
-- **Understat library**: Async fetch of EPL historical xG data (requires internet)
-- **statsmodels**: GLM Poisson regression (formula-based interface)
-- **pandas, numpy, scipy.stats**: Data manipulation & Poisson PMF computation
+**Data sources**:
+- **football-data.co.uk**: Historical match results (2005-present)
+  - Free, no API key required
+  - CSV format download
+  - URL pattern: `https://www.football-data.co.uk/mmz4281/{SEASON}/E0.csv`
+
+- **Premier League API** (footballapi.pulselive.com): Upcoming fixtures
+  - Free, no API key required
+  - JSON format
+  - Returns 100+ upcoming fixtures (filter to specific matchweek)
+
+**Python packages**:
+- `statsmodels`: Poisson GLM training (`smf.glm()`)
+- `pandas`, `numpy`: Data manipulation
+- `scipy.stats.poisson`: Probability calculations
+- `requests`, `BeautifulSoup4`: API calls (minimal use)
+- `webbrowser`: Auto-open HTML reports
 
 ## Gotchas & Common Errors
 
-1. **Feature schema mismatch**: If `build_features.py` adds/removes rolling features but models weren't retrained, prediction will fail with `KeyError`. Always retrain after schema changes.
-2. **Data leakage via rolling window**: Ensure `.shift(1)` is used in rolling mean—don't include current match in averages.
-3. **Player name normalization**: xG lookup is case-sensitive; inconsistent names = 0 xG contribution. Use cleaning utilities.
-4. **Season start missing form**: First 4 matches lack rolling stats—median imputation fills these. Check for NaN after imputation.
-5. **Empty lineup**: If predicted lineup is empty, `team_xg_avg_adj = 0`. This propagates through model; may produce invalid predictions.
-6. **Home/away xG confusion**: `calculate_team_xg()` returns per-team xG; `merge_xg_to_fixtures()` converts to per-fixture (home vs away roles). Don't apply adjustment twice.
+### 1. Team Name Mismatch
+**Symptom**: "Team not found in model" or KeyError during prediction
+**Cause**: Premier League API team name not mapped to football-data.co.uk format
+**Fix**: Add mapping to `_normalize_team_name()` in `scrape_fixtures.py`
 
-## File Organization Principles
+### 2. Outdated Model
+**Symptom**: Predictions based on old data, poor accuracy
+**Cause**: Model file older than latest match results
+**Fix**: Run `python3 main.py` (auto-detects and retrains)
 
-- **src/scraping/**: Web scraping only (BeautifulSoup, requests)
-- **src/data/**: External data fetching (Understat, raw downloads)
-- **src/processing/**: Transform scraped data (xG lookups, merging)
-- **src/features/**: Feature engineering & dataset construction
-- **src/train/**: Model training (statsmodels, serialization)
-- **src/predict/**: Inference & simulation logic
-- **src/utils/**: Reusable utilities (cleaning, common transformations)
-- **data/raw/**: Immutable source data (CSVs, JSON from APIs)
-- **data/processed/**: Derived artifacts (features, JSON intermediates)
-- **models/**: Pickle-serialized trained models
+### 3. 100 Fixtures Returned
+**Symptom**: API returns 100 fixtures instead of ~10 for next matchweek
+**Cause**: Automatic matchweek filtering logic
+**Fix**: Already implemented - filters to earliest upcoming matchweek
 
-When adding new functionality, place it in the appropriate `src/` subdirectory based on its role in the pipeline.
+### 4. Time-Weighting Not Applied
+**Symptom**: Df Residuals ≈ 15,284 (should be ~469 if weighted)
+**Cause**: `use_time_weighting=False` or weights not passed to GLM
+**Fix**: Ensure `use_time_weighting=True` in `train_poisson_model()`
+
+### 5. HTML Not Auto-Opening
+**Symptom**: HTML generated but doesn't open in browser
+**Cause**: `webbrowser.open()` failed (macOS security, headless environment)
+**Fix**: Check console for error message, manually open file from `data/weekly/`
+
+### 6. Large Standard Errors in Model
+**Symptom**: Some team coefficients have std err > 1000
+**Cause**: Teams with very few recent matches (e.g., relegated teams from 2005)
+**Fix**: This is expected - time-weighting reduces their effective sample size to near zero
+
+## File Organization (ACTUAL STRUCTURE)
+
+```
+EPL-Predictor/
+├── main.py                          # Main entry point (end-to-end pipeline)
+├── data/
+│   ├── raw/
+│   │   └── epl_historical_results.csv   # Historical match data (football-data.co.uk)
+│   └── weekly/
+│       └── predictions_mw{N}_{timestamp}.html  # Prediction outputs (HTML only)
+├── models/
+│   ├── poisson_glm_model.pkl        # Trained Poisson GLM
+│   ├── poisson_coefficients.pkl     # Extracted coefficients
+│   └── poisson_coefficients.json    # Human-readable coefficients
+└── src/
+    ├── data/
+    │   └── fetch_historical_data.py     # Fetch from football-data.co.uk
+    ├── train/
+    │   ├── train_poisson_model.py       # Train Poisson GLM (with time-weighting)
+    │   └── update_model.py              # Check if retraining needed
+    ├── weekly/
+    │   ├── scrape_fixtures.py           # Fetch fixtures from Premier League API
+    │   └── predict_weekly.py            # Generate predictions & HTML report
+    ├── predict/
+    │   └── generate_probabilities.py    # Poisson probability calculations
+    └── utils/
+        └── clean_team_names.py          # Team name normalization utilities
+```
+
+**Note**: `src/scraping/`, `src/processing/`, `src/features/` directories referenced in old docs **do not exist**. Current architecture is simpler.
+
+## Model Improvement Roadmap
+
+### Current Implementation ✅
+- Dixon-Coles time-weighting (ξ=0.012)
+- Team attack/defense strengths
+- Home advantage coefficient
+- Historical data from 2005-present
+
+### In Progress 🔄
+- Hyperparameter tuning for optimal ξ
+- Backtesting framework for model validation
+
+### Future Enhancements 🔮
+- Dixon-Coles dependency correction (adjust for low-scoring draws)
+- Rolling form features (recent goals scored/conceded)
+- Expected goals (xG) integration from Understat
+- Lineup-based predictions (player xG contributions)
+- Ensemble models (combine multiple approaches)

@@ -11,6 +11,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
+from datetime import datetime
+import logging
 
 
 def fetch_season_data(url: str) -> pd.DataFrame:
@@ -123,3 +125,93 @@ def save_epl_data(output_file: str = "data/raw/epl_historical_results.csv"):
 
 if __name__ == "__main__":
     save_epl_data()
+
+
+def fetch_and_update_data(data_path: str = 'data/raw/epl_historical_results.csv') -> bool:
+    """
+    Fetch latest EPL data from football-data.co.uk and update historical file.
+    
+    This checks the existing file first, then only fetches new data if needed.
+    
+    Args:
+        data_path: Path to historical results CSV
+        
+    Returns:
+        True if data was updated, False if no update needed or fetch failed
+    """
+    logger = logging.getLogger(__name__)
+    data_file = Path(data_path)
+    
+    try:
+        # Check if we need to fetch at all
+        needs_fetch = True
+        if data_file.exists():
+            # Check last modified time - skip if updated recently (within last hour)
+            import time
+            file_age_hours = (time.time() - data_file.stat().st_mtime) / 3600
+            
+            if file_age_hours < 1.0:
+                logger.info(f"Data file updated {file_age_hours:.1f} hours ago, skipping fetch")
+                print(f"✓ Data file recently updated ({file_age_hours:.1f}h ago), skipping fetch")
+                
+                old_df = pd.read_csv(data_path, dtype={'Season': str})
+                latest_date = old_df['Date'].max()
+                print(f"  {len(old_df)} matches, latest: {latest_date}")
+                return False
+        
+        # Fetch data from football-data.co.uk
+        logger.info("Fetching latest EPL data from football-data.co.uk...")
+        print("📥 Fetching latest EPL data from football-data.co.uk...")
+        
+        df = fetch_data("Premier League", "englandm.php")
+        
+        # Compare with existing file
+        updated = False
+        
+        if data_file.exists():
+            old_df = pd.read_csv(data_path, dtype={'Season': str})
+            old_count = len(old_df)
+            new_count = len(df)
+            
+            if new_count > old_count:
+                updated = True
+                logger.info(f"Data updated: {old_count} → {new_count} matches (+{new_count - old_count})")
+                print(f"✓ Data updated: {old_count} → {new_count} matches (+{new_count - old_count} new)")
+                
+                # Save the updated data
+                df.to_csv(data_path, index=False)
+                latest_date = df['Date'].max()
+                print(f"  Latest match: {latest_date}")
+            else:
+                logger.info(f"Data unchanged: {new_count} matches")
+                print(f"✓ Data already up to date ({new_count} matches)")
+                # Don't save - no changes needed
+                latest_date = old_df['Date'].max()
+                print(f"  Latest match: {latest_date}")
+        else:
+            updated = True
+            logger.info(f"Created new data file with {len(df)} matches")
+            print(f"✓ Created new data file with {len(df)} matches")
+            
+            # Save the new data file
+            df.to_csv(data_path, index=False)
+            latest_date = df['Date'].max()
+            print(f"  Latest match: {latest_date}")
+        
+        return updated
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch data: {e}")
+        print(f"⚠️  Failed to fetch latest data: {e}")
+        print("   Using existing data file...")
+        
+        # Check existing file
+        if data_file.exists():
+            df = pd.read_csv(data_path, dtype={'Season': str})
+            latest_date = df['Date'].max()
+            print(f"✓ Using existing data ({len(df)} matches, latest: {latest_date})")
+            return False
+        else:
+            logger.error(f"No data file found: {data_path}")
+            raise FileNotFoundError(f"Cannot proceed - no data file found: {data_path}")
+

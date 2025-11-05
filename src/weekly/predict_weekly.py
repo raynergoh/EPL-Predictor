@@ -14,6 +14,7 @@ import json
 import pandas as pd
 from datetime import datetime
 from typing import List, Dict
+import webbrowser
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -200,14 +201,14 @@ class WeeklyPredictor:
         matchweek: int = None
     ) -> Dict[str, Path]:
         """
-        Save predictions in multiple formats.
+        Save predictions as HTML report only and auto-open in browser.
         
         Args:
             predictions: List of prediction dictionaries
             matchweek: Matchweek number for filename
             
         Returns:
-            Dict mapping format name to output file path
+            Dict with 'html' key mapping to output file path
         """
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
@@ -216,25 +217,17 @@ class WeeklyPredictor:
         else:
             base_name = f'predictions_{timestamp}'
         
-        output_files = {}
-        
-        # Save JSON (detailed)
-        json_file = self.output_dir / f'{base_name}.json'
-        with open(json_file, 'w') as f:
-            json.dump(predictions, f, indent=2)
-        output_files['json'] = json_file
-        
-        # Save CSV (summary)
-        csv_file = self.output_dir / f'{base_name}.csv'
-        self._save_csv_summary(predictions, csv_file)
-        output_files['csv'] = csv_file
-        
-        # Save HTML (formatted report)
+        # Save HTML only
         html_file = self.output_dir / f'{base_name}.html'
         self._save_html_report(predictions, html_file, matchweek)
-        output_files['html'] = html_file
         
-        return output_files
+        # Auto-open HTML in browser
+        try:
+            webbrowser.open(f'file://{html_file.absolute()}')
+        except Exception as e:
+            print(f"⚠️  Could not auto-open HTML: {e}")
+        
+        return {'html': html_file}
     
     def _save_csv_summary(self, predictions: List[Dict], output_file: Path):
         """Save predictions as CSV summary table."""
@@ -533,21 +526,21 @@ class WeeklyPredictor:
                 <div class="stat-label">Fixtures</div>
             </div>
             <div class="stat">
-                <div class="stat-value">50.3%</div>
+                <div class="stat-value">51.95%</div>
                 <div class="stat-label">Model Accuracy</div>
             </div>
             <div class="stat">
-                <div class="stat-value">80.9%</div>
-                <div class="stat-label">Home Win Recall</div>
+                <div class="stat-value">ξ=0.003</div>
+                <div class="stat-label">Time-Weighted</div>
             </div>
         </div>
         
         {match_cards}
         
         <div class="footer">
-            <p>Predictions generated using Poisson GLM trained on {training_matches} historical matches</p>
+            <p>Predictions generated using Time-Weighted Poisson GLM (Dixon-Coles) trained on {training_matches} historical matches</p>
             <p style="margin-top: 10px; font-size: 0.9em;">
-                Model: 70 coefficients · Home advantage: +22.48% · Validated on 3,890 test matches
+                Model: 51.95% accuracy · Time-weighting: ξ=0.003 · Validated on 1,900 test matches (5-fold CV)
             </p>
             <p style="margin-top: 10px; font-size: 0.85em; opacity: 0.7;">
                 Generated on {timestamp}
@@ -682,8 +675,8 @@ class WeeklyPredictor:
         mw = fixtures[0].get('matchweek') if fixtures else None
         output_files = self.save_predictions(predictions, mw)
         
-        for format_name, file_path in output_files.items():
-            print(f"✅ {format_name.upper()}: {file_path}")
+        print(f"✅ HTML Report: {output_files['html']}")
+        print(f"🌐 Opening in browser...")
         
         print(f"\n{'='*70}")
         print("PIPELINE COMPLETE!")

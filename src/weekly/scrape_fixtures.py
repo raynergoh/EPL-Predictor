@@ -163,6 +163,22 @@ class FixtureScraper:
             if matchweek and fixtures:
                 fixtures = [f for f in fixtures if f.get('matchweek') == matchweek]
                 self.logger.info(f"Filtered to {len(fixtures)} fixtures for matchweek {matchweek}")
+            elif fixtures:
+                # If no matchweek specified, get only the NEXT upcoming matchweek
+                # Group fixtures by matchweek and get the earliest one
+                matchweeks = {}
+                for f in fixtures:
+                    mw = f.get('matchweek')
+                    if mw:
+                        if mw not in matchweeks:
+                            matchweeks[mw] = []
+                        matchweeks[mw].append(f)
+                
+                if matchweeks:
+                    # Get the earliest matchweek number
+                    next_matchweek = min(matchweeks.keys())
+                    fixtures = matchweeks[next_matchweek]
+                    self.logger.info(f"Auto-selected matchweek {next_matchweek} ({len(fixtures)} fixtures)")
             
             if fixtures:
                 season = fixtures[0].get('season', 'Unknown')

@@ -1,0 +1,182 @@
+{
+  "best_xi": 0.003,
+  "best_log_likelihood": -2.9899444515852496,
+  "tested_values": [
+    {
+      "xi": 0.003,
+      "log_likelihood": -2.9899444515852496,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0035,
+      "log_likelihood": -2.990047041264608,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.004,
+      "log_likelihood": -2.9904129746136534,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0045000000000000005,
+      "log_likelihood": -2.991042731649437,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.005,
+      "log_likelihood": -2.9919114807947595,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0055,
+      "log_likelihood": -2.9929692693332175,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.006,
+      "log_likelihood": -2.994156083129914,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.006500000000000001,
+      "log_likelihood": -2.995417947637519,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.007,
+      "log_likelihood": -2.996715380427683,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.007500000000000001,
+      "log_likelihood": -2.998023983773633,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.008,
+      "log_likelihood": -2.9993309767024496,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0085,
+      "log_likelihood": -3.0006310293257443,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.009000000000000001,
+      "log_likelihood": -3.0019229722421357,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.009500000000000001,
+      "log_likelihood": -3.003207664442957,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.01,
+      "log_likelihood": -3.004486776125123,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.010499999999999999,
+      "log_likelihood": -3.0057621603224343,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.011,
+      "log_likelihood": -3.007035561441468,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0115,
+      "log_likelihood": -3.008308501166206,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.012,
+      "log_likelihood": -3.0095822509870125,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0125,
+      "log_likelihood": -3.0108578432878317,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.013000000000000001,
+      "log_likelihood": -3.0121360969929483,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.013500000000000002,
+      "log_likelihood": -3.013417646546023,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.013999999999999999,
+      "log_likelihood": -3.0147029694522365,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.014499999999999999,
+      "log_likelihood": -3.01599241071981,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.015,
+      "log_likelihood": -3.017286203930614,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0155,
+      "log_likelihood": -3.018584489222916,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.016,
+      "log_likelihood": -3.0198873286315275,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0165,
+      "log_likelihood": -3.0211947192258584,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.017,
+      "log_likelihood": -3.0225066044221967,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0175,
+      "log_likelihood": -3.023822883771183,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.018,
+      "log_likelihood": -3.025143421454179,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0185,
+      "log_likelihood": -3.0264680536693453,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.019,
+      "log_likelihood": -3.0277965950480277,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.0195,
+      "log_likelihood": -3.0291288442142887,
+      "valid_matches": 5601
+    },
+    {
+      "xi": 0.02,
+      "log_likelihood": -3.0304645885803922,
+      "valid_matches": 5601
+    }
+  ],
+  "tuned_at": "2025-11-06T00:40:40.262330"
+}
