@@ -4,6 +4,22 @@ A statistical model for predicting English Premier League match outcomes using *
 
 ---
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [How It Works](#how-it-works)
+  - [Model Training with Time-Weighting](#model-training-with-time-weighting)
+  - [Making Predictions](#making-predictions)
+  - [Hyperparameter Optimization](#hyperparameter-optimization)
+  - [Dixon-Coles Dependency Correction Investigation](#dixon-coles-dependency-correction-investigation)
+- [Backtesting Results](#backtesting-results)
+- [How to Use](#how-to-use)
+- [Project Structure](#project-structure)
+- [Acknowledgments](#acknowledgments)
+- [Future Enhancements](#future-enhancements)
+
+---
+
 ## Introduction
 
 This project predicts Premier League football match outcomes using a **time-weighted Poisson regression model**. The approach treats goal-scoring as a Poisson process, where each team has an underlying "attack strength" and "defense strength", with recent matches weighted more heavily to capture current form.
@@ -19,21 +35,25 @@ This project predicts Premier League football match outcomes using a **time-weig
 - 📊 Professional HTML reports with match probabilities
 - 🚀 **Fast execution** - caches data, only refetches when needed
 
+**Methodology Credits:**
+- [Predicting Football Results with Statistical Modelling](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/) by Artiebits - Base Poisson regression framework
+- [Improving Poisson Model Using Time-Weighting](https://artiebits.com/blog/improving-poisson-model-using-time-weighting/) by Artiebits - Dixon-Coles time-weighting enhancement
+- Dixon & Coles (1997) - Original theoretical framework
+
 ---
 
 ## How It Works
 
-The methodology is built on two key approaches:
+The model follows a **two-stage approach**:
 
-1. **Base Poisson Model**: Following the statistical modeling framework from [Predicting Football Results with Statistical Modelling](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/) by Artiebits, which explains how to use Poisson regression to model goal-scoring in football.
+1. **Base Poisson Model**: Statistical framework from [Artiebits' guide](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/) - models team attack/defense strengths with home advantage
+2. **Time-Weighting Enhancement**: Dixon-Coles exponential decay from [Artiebits' time-weighting article](https://artiebits.com/blog/improving-poisson-model-using-time-weighting/) - gives more weight to recent matches
 
-2. **Time-Weighting Enhancement**: Applying Dixon-Coles exponential decay from [Improving Poisson Model Using Time-Weighting](https://artiebits.com/blog/improving-poisson-model-using-time-weighting/) by Artiebits, which improves the base model by giving more weight to recent matches.
+### Model Training with Time-Weighting
 
-### 1. Model Training with Time-Weighting
+#### Base Poisson Regression
 
-#### Base Poisson Regression Model
-
-We start with a **Poisson Generalized Linear Model (GLM)** as described in [Artiebits' statistical modeling guide](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/). The formula is:
+We use a **Poisson Generalized Linear Model (GLM)** with the formula:
 
 ```
 log(goals) = intercept + home_advantage + team_attack + opponent_defense
@@ -45,11 +65,9 @@ log(goals) = intercept + home_advantage + team_attack + opponent_defense
 - There's a **home advantage term** (~0.18, or +20% more goals when playing at home)
 - Arsenal is the baseline team (coefficient = 0), all others measured relative to Arsenal
 
-**Why Poisson?** Goals in football are relatively rare, discrete events that occur independently - perfect for Poisson modeling. The Poisson distribution takes a single parameter (λ, the expected number of goals) and gives us the probability of observing 0, 1, 2, 3... goals.
+#### Time-Weighting (Dixon-Coles)
 
-#### Time-Weighting Enhancement (Dixon-Coles)
-
-Building on the base model, we apply **exponential decay weights** as described in [Artiebits' time-weighting guide](https://artiebits.com/blog/improving-poisson-model-using-time-weighting/) to give more importance to recent matches:
+We apply **exponential decay weights** to give more importance to recent matches:
 
 ```
 Weight(match) = exp(-ξ × t)
@@ -65,22 +83,15 @@ Where:
 - ξ=0.003 means 2024-25 matches have weight ≈1.0, 2005-06 matches have weight ≈0.002
 - Effective training size: ~2,245 matches (vs 15,284 unweighted)
 
-**Training process:**
-1. Load historical match data (2005-2025)
-2. Calculate time weights for each match using Dixon-Coles formula
-3. Fit Poisson GLM with `freq_weights` parameter
-4. Extract team strength coefficients
-5. Save trained model for predictions
+**Reference**: Dixon, M. J., & Coles, S. G. (1997). "Modelling Association Football Scores and Inefficiencies in the Football Betting Market". *Journal of the Royal Statistical Society*.
 
-### 2. Making Predictions
-
-Once the time-weighted model is trained, we can predict any upcoming match. The prediction process follows the standard Poisson approach:
+### Making Predictions
 
 For any upcoming match (e.g., Arsenal vs Liverpool):
 
 **Step 1: Calculate Expected Goals**
 
-Using the team coefficients extracted from the GLM:
+Using the team coefficients from the trained model:
 
 ```
 Arsenal xG (home) = exp(intercept + home_advantage + Arsenal_attack + Liverpool_defense)
@@ -89,21 +100,19 @@ Liverpool xG (away) = exp(intercept + Liverpool_attack + Arsenal_defense)
 
 **Step 2: Generate Scoreline Probabilities**
 
-Using the Poisson distribution, calculate the probability of each team scoring 0, 1, 2, 3, 4, 5, or 6 goals. Then create a 7×7 matrix by multiplying these probabilities (independence assumption):
+Create a 7×7 matrix of all possible scorelines (0-0 to 6-6):
 
 ```
 P(Arsenal 2 - 1 Liverpool) = P(Arsenal scores 2) × P(Liverpool scores 1)
                             = poisson.pmf(2, λ_arsenal) × poisson.pmf(1, λ_liverpool)
 ```
 
-This gives us the probability of every possible scoreline from 0-0 to 6-6.
-
 **Step 3: Aggregate Match Outcomes**
-- **Home Win**: Sum all cells where home goals > away goals (lower triangle)
+- **Home Win**: Sum all cells where home goals > away goals
 - **Draw**: Sum diagonal cells where home goals = away goals
-- **Away Win**: Sum all cells where away goals > home goals (upper triangle)
+- **Away Win**: Sum all cells where away goals > home goals
 
-This produces predictions like:
+**Example Output:**
 ```
 Arsenal vs Liverpool
 Expected Goals: 1.88 - 1.15
@@ -111,9 +120,7 @@ Most Likely Scoreline: 1-1 (10.4%)
 Probabilities: Home 54% | Draw 23% | Away 23%
 ```
 
-**Key Insight:** The time-weighting only affects the training phase (calculating coefficients). The prediction process uses standard Poisson probability calculations, which is why this enhancement is so elegant - it improves accuracy without changing the fundamental prediction mathematics.
-
-### 3. Hyperparameter Optimization
+### Hyperparameter Optimization
 
 The decay parameter ξ was optimized using **time-series cross-validation** (5 folds, ~5,600 test matches):
 
@@ -125,16 +132,69 @@ The decay parameter ξ was optimized using **time-series cross-validation** (5 f
 
 **Key finding:** The optimal ξ for this 20-year dataset (0.003) is 4× lower than the article's recommendation (0.012), meaning we retain more historical data. This makes sense given our longer time span.
 
+### Dixon-Coles Dependency Correction Investigation
+
+#### Why We Didn't Implement It
+
+After thorough investigation, we decided **NOT** to implement Dixon-Coles dependency correction despite it being a well-known enhancement in football prediction literature.
+
+#### The Problem It Tries to Solve
+
+Standard Poisson models assume home and away goals are **independent** events. However, Dixon & Coles (1997) showed that certain low-scoring matches occur more/less frequently than Poisson predicts:
+
+- **0-0 draws** happen more often (defensive, cagey matches)
+- **1-0 and 0-1** results happen less often
+- **1-1 draws** happen more often than expected
+
+The Dixon-Coles **tau (τ) function** adjusts probabilities for these four specific scorelines using a dependency parameter **ρ** (rho). Typical values in literature: **ρ ≈ -0.13 to -0.18**
+
+#### Our Testing Methodology
+
+We implemented and tested the full correction:
+
+1. **Hyperparameter Tuning**: Tested ρ values from -0.25 to 0.00 using 5-fold cross-validation
+2. **Optimal ρ Found**: **-0.040** (much weaker than Dixon & Coles' -0.13)
+3. **Backtesting**: Compared 3 models on 5 years of out-of-sample data
+
+#### Results: Negligible Impact
+
+| Model | Accuracy | Brier Score | Log-Likelihood |
+|-------|----------|-------------|----------------|
+| Baseline (No weighting) | 51.84% | 0.2014 | -2.9819 |
+| Time-Weighted (ξ=0.003) | **51.95%** | **0.1996** | **-2.9620** |
+| Time-Weighted + DC (ρ=-0.040) | 51.95% | 0.1996 | -2.9620 |
+
+**Key Finding**: Dixon-Coles correction provided **ZERO improvement** over time-weighting alone.
+
+#### Why Such Minimal Impact?
+
+1. **Very Weak Dependency**: Optimal ρ=-0.040 vs literature's -0.13 suggests modern EPL has much weaker goal dependency
+2. **Negligible Difference**: ρ=-0.040 vs ρ=0.000 differs by only 0.0002 in log-likelihood
+3. **Modern Football**: Higher scoring, more attacking play than 1990s data reduces low-score correlation
+4. **Time-Weighting Captures It**: Recent-match weighting may already account for team tactical tendencies
+
+#### Evidence
+
+![ρ Tuning Curve](data/tuning/rho_tuning_curve.png)
+
+The tuning curve shows log-likelihood is nearly flat between ρ=-0.05 and ρ=0.00, confirming minimal dependency.
+
+#### Conclusion
+
+For modern EPL data (2005-2025), **Dixon-Coles dependency correction adds unnecessary complexity for zero gain**. We keep the simpler time-weighted Poisson model.
+
+**Research artifacts preserved**:
+- `src/train/tune_rho.py` - Hyperparameter optimization script
+- `data/tuning/rho_tuning_results_*.csv` - Full tuning results
+- Evidence demonstrates correction is unnecessary for modern EPL
+
 ---
 
 ## Backtesting Results
 
-The model was validated using **walk-forward time-series cross-validation** to ensure robust out-of-sample testing. Two models were compared:
+The model was validated using **walk-forward time-series cross-validation** on out-of-sample data.
 
-1. **Baseline**: Standard Poisson (no time-weighting)
-2. **Optimized**: Time-weighted Poisson (ξ=0.003)
-
-### Walk-Forward Validation Setup
+### Validation Setup
 
 - **Method**: 5 folds of walk-forward testing
 - **Training size**: 3,000 - 4,520 matches
@@ -150,64 +210,50 @@ The model was validated using **walk-forward time-series cross-validation** to e
 | **Brier Score** | 0.2014 ± 0.0135 | **0.1996 ± 0.0118** | **-0.0018** ✓ |
 | **Log-Likelihood** | -2.9819 ± 0.0929 | **-2.9620 ± 0.0873** | **+0.0199** ✓ |
 
-**Key insights:**
+**Key Insights:**
 - ✅ **Consistent improvement** across all metrics
 - ✅ **Lower variance** (4.59% vs 5.11%) = more stable predictions
 - ✅ **Better calibration** (lower Brier score)
 - ✅ Performs at **professional bookmaker level** (50-53% industry standard)
 
-**Context:** The baseline model already performs well (51.84%), so the improvement from time-weighting represents meaningful refinement. In academic literature, Poisson models achieve 45-52% accuracy, placing this implementation at the high end.
-
 ### Performance by Fold
 
-| Fold | Period | Baseline Acc | Time-Weighted Acc | Improvement |
-|------|--------|--------------|-------------------|-------------|
+| Fold | Period | Baseline | Time-Weighted | Improvement |
+|------|--------|----------|---------------|-------------|
 | 1 | 2013-2014 | 54.7% | **55.5%** | +0.8% |
 | 2 | 2014-2015 | 51.6% | **52.6%** | +1.1% |
 | 3 | 2015-2016 | 43.9% | **44.2%** | +0.3% |
 | 4 | 2016-2017 | **57.6%** | 55.3% | -2.4% |
 | 5 | 2017-2018 | 51.3% | **52.1%** | +0.8% |
 
-Time-weighting improves performance in 4 out of 5 folds, with one outlier where baseline performed better.
+Time-weighting improves performance in 4 out of 5 folds.
 
-### Visual Performance Analysis
+### Visualization
 
-**Accuracy Comparison Across Test Folds:**
-
+**Accuracy Comparison:**
 ![Accuracy by Fold](data/backtest/charts/accuracy_by_fold.png)
 
-The chart shows consistent improvement in most folds, with time-weighting providing more stable predictions.
-
-**Comprehensive Metrics Comparison:**
-
+**Comprehensive Metrics:**
 ![Metrics Comparison](data/backtest/charts/metrics_comparison.png)
 
-All three metrics (Accuracy, Brier Score, Log-Likelihood) show improvement with time-weighting.
-
-**Aggregate Performance Summary:**
-
+**Aggregate Summary:**
 ![Aggregate Summary](data/backtest/charts/aggregate_summary.png)
 
-Average performance across all 5 folds with standard deviation. Time-weighting reduces variance (more stable predictions).
-
 **Improvement Heatmap:**
-
 ![Improvement Heatmap](data/backtest/charts/improvement_heatmap.png)
-
-Visual representation of where time-weighting provides the most benefit across metrics and folds.
 
 ### Comparison to Benchmarks
 
 | Method | Accuracy | Source |
 |--------|----------|--------|
 | Random guessing | 33% | Theoretical baseline |
-| Bookmakers | 50-53% | Industry standard |
 | Academic Poisson models | 45-52% | Research papers |
-| **This model (baseline)** | 51.84% | Your implementation |
-| **This model (time-weighted)** | **51.95%** | **Your implementation** ✓ |
+| **This model (baseline)** | **51.84%** | This implementation |
+| **This model (time-weighted)** | **51.95%** | This implementation ✓ |
+| Bookmakers | 50-53% | Industry standard |
 | Advanced ensembles | 53-55% | Research frontier |
 
-**You're performing at professional bookmaker level!** 🎯
+**Result: Performing at professional bookmaker level!** 🎯
 
 ---
 
@@ -221,22 +267,22 @@ cd EPL-Predictor
 pip install -r requirements.txt
 ```
 
-### Quick Start: One-Command Prediction
+### Quick Start
 
-**The simplest way** - automatically fetches latest results, trains model with time-weighting, and generates predictions:
+**One-command prediction** - automatically fetches data, trains model, and generates predictions:
 
 ```bash
 python3 main.py
 ```
 
 This will:
-1. 📥 Fetch latest EPL data from football-data.co.uk (cached for 1 hour)
+1. 📥 Fetch latest EPL data (cached for 24 hours)
 2. 🤖 Train time-weighted Poisson GLM (ξ=0.003) if needed
 3. ⚽ Scrape upcoming fixtures from Premier League API
 4. 📊 Generate predictions for next matchweek
 5. 🌐 Auto-open HTML report in browser
 
-**Output:**
+**Example output:**
 ```
 ✓ Data already up to date (7,642 matches)
 ✓ Model is up to date (no retraining needed)
@@ -244,56 +290,43 @@ This will:
 🌐 Opening in browser...
 ```
 
-**Predict specific matchweek:**
-```bash
-python3 main.py --matchweek 15
-```
+### Command Options
 
-**Force model retraining:**
 ```bash
+# Predict specific matchweek
+python3 main.py --matchweek 15
+
+# Force model retraining
 python3 main.py --retrain
+
+# Force data fetch (ignore cache)
+python3 main.py --force-fetch
+
+# Custom cache duration (hours)
+python3 main.py --cache-hours 48
 ```
 
 ### Advanced Usage
 
-**Hyperparameter tuning** (find optimal ξ for your dataset):
+**Hyperparameter tuning:**
 ```bash
 python3 src/train/tune_xi.py
 ```
 
-**Backtesting** (validate model performance):
+**Backtesting:**
 ```bash
 python3 src/backtest/backtest_models.py
 ```
 
-**Train model manually** (with custom parameters):
+**Manual training:**
 ```bash
 python3 src/train/train_poisson_model.py
 ```
 
-### How the Model Stays Current
+### Viewing Results
 
-**Training data:**
-- Historical: 2005-2025 (7,642 matches)
-- Time-weighted: Recent matches weighted more heavily
-- Auto-updates: Fetches new data automatically
-
-**Data fetching optimization:**
-- Checks file age before fetching
-- Skips download if updated within last hour
-- Only saves if data actually changed
-- **Saves ~40 seconds per run!**
-
-**Example for Matchweek 11 predictions:**
-1. Loads all historical data (2005-2025)
-2. Applies time-weighting (recent matches weighted higher)
-3. Trains model (effective sample: ~2,245 matches)
-4. Predicts Matchweek 11 fixtures
-
-### View Results
-
-The HTML report **opens automatically** in your browser. It includes:
-- 🎨 Professional design with Premier League branding
+The HTML report opens automatically in your browser with:
+- 🎨 Professional Premier League design
 - 🛡️ Team badges for all clubs
 - 📊 Expected goals (xG) for each team
 - 📈 Win/Draw/Loss probabilities with visual bars
@@ -301,129 +334,19 @@ The HTML report **opens automatically** in your browser. It includes:
 
 **Manual access:**
 ```bash
-open data/weekly/predictions_mw11_*.html
+open data/weekly/predictions_mw*_*.html
 ```
+
+### How the Model Stays Current
+
+- **Historical data**: 2005-2025 (7,642 matches)
+- **Time-weighted**: Recent matches weighted more heavily
+- **Auto-updates**: Fetches new results automatically
+- **Smart caching**: Only downloads if data changed (saves ~40 seconds)
 
 ---
 
-## Model Methodology
 
-### Two-Stage Approach
-
-This implementation follows a **two-stage methodology**:
-
-**Stage 1: Base Poisson Model** ([Artiebits' Statistical Modelling Guide](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/))
-- Treats goal-scoring as a Poisson process
-- Models team attack/defense strengths
-- Incorporates home advantage
-- All historical matches weighted equally
-
-**Stage 2: Time-Weighting Enhancement** ([Artiebits' Time-Weighting Guide](https://artiebits.com/blog/improving-poisson-model-using-time-weighting/))
-- Applies Dixon-Coles exponential decay
-- Recent matches weighted more heavily
-- Improves accuracy by 0.11% (51.84% → 51.95%)
-- Reduces prediction variance (more stable)
-
-### Dixon-Coles Time-Weighting
-
-**Reference**: Dixon, M. J., & Coles, S. G. (1997). "Modelling Association Football Scores and Inefficiencies in the Football Betting Market". *Journal of the Royal Statistical Society*.
-
-The exponential decay function:
-```
-φ(t) = exp(-ξ × t)
-```
-
-Where `t` is time since match in half-weeks (3.5 days).
-
-**Why half-weeks?** Dixon & Coles found this aligns well with typical match schedules (one match per team per week).
-
-**Weight distribution in this implementation:**
-- Matches from 2024-25: weight ≈ 1.0
-- Matches from 2015-16: weight ≈ 0.15
-- Matches from 2005-06: weight ≈ 0.002
-
-### Hyperparameter Selection
-
-The optimal ξ=0.003 was selected via:
-1. Grid search over 35 values (0.003 to 0.020)
-2. Time-series cross-validation (5 folds)
-3. Evaluation metric: Log-likelihood
-4. Result: ξ=0.003 maximizes out-of-sample performance
-
-**Why 0.003 instead of 0.012?**
-- Dixon & Coles (1997): ξ=0.0065
-- Modern EPL data (Artiebits): ξ=0.012
-- This dataset (2005-2025): **ξ=0.003** ✓
-
-The lower optimal value suggests that with 20 years of data, retaining more history improves predictions.
-
----
-
-## Dixon-Coles Dependency Correction Investigation
-
-### Why We Didn't Implement It
-
-After thorough investigation, we decided **NOT** to implement Dixon-Coles dependency correction despite it being a well-known enhancement in football prediction literature. Here's why:
-
-### The Problem Dixon-Coles Tries to Solve
-
-Standard Poisson models assume home and away goals are **independent** events. However, Dixon & Coles (1997) showed that certain low-scoring matches occur more/less frequently than Poisson predicts:
-
-- **0-0 draws** happen more often (defensive, cagey matches)
-- **1-0 and 0-1** results happen less often
-- **1-1 draws** happen more often than expected
-
-The Dixon-Coles **tau (τ) function** adjusts probabilities for these four specific scorelines using a dependency parameter **ρ** (rho):
-
-```
-τ(0,0) = 1 - λ_home × λ_away × ρ
-τ(1,0) = 1 + λ_away × ρ
-τ(0,1) = 1 + λ_home × ρ
-τ(1,1) = 1 - ρ
-τ(i,j) = 1.0  for all other scorelines
-```
-
-Typical values in literature: **ρ ≈ -0.13 to -0.18**
-
-### Our Testing Methodology
-
-We implemented the full Dixon-Coles correction and tested it rigorously:
-
-1. **Hyperparameter Tuning**: Tested ρ values from -0.25 to 0.00 (step 0.01) using 5-fold time-series cross-validation
-2. **Optimal ρ Found**: **-0.040** (much weaker than Dixon & Coles' -0.13)
-3. **Backtesting**: Compared 3 models on 5 years of out-of-sample data (2013-2018)
-
-### Results: Minimal Impact on Modern EPL Data
-
-| Model | Accuracy | Brier Score | Log-Likelihood |
-|-------|----------|-------------|----------------|
-| Baseline (No weighting) | 51.84% | 0.2014 | -2.9819 |
-| Time-Weighted (ξ=0.003) | **51.95%** | **0.1996** | **-2.9620** |
-| Time-Weighted + DC (ρ=-0.040) | 51.95% | 0.1996 | -2.9620 |
-
-**Key Finding**: Dixon-Coles correction with optimal ρ=-0.040 provided **ZERO improvement** over time-weighting alone.
-
-### Why Such Minimal Impact?
-
-1. **Very Weak Dependency**: Optimal ρ=-0.040 vs literature's -0.13 suggests modern EPL has much weaker goal dependency
-2. **Negligible Difference**: ρ=-0.040 vs ρ=0.000 differs by only 0.0002 in log-likelihood
-3. **Modern Football**: Higher scoring, more attacking play than 1990s data may reduce low-score correlation
-4. **Time-Weighting Captures It**: Recent-match weighting may already account for team tactical tendencies
-
-### Evidence
-
-![ρ Tuning Curve](data/tuning/charts/rho_tuning_curve.png)
-
-The tuning curve shows log-likelihood is nearly flat between ρ=-0.05 and ρ=0.00, indicating minimal dependency in modern data.
-
-### Conclusion
-
-For this dataset (2005-2025 EPL), **Dixon-Coles dependency correction adds unnecessary complexity for almost zero gain**. We keep the simpler time-weighted Poisson model, which achieves 51.95% accuracy without the correction.
-
-**Implementation retained for research**:
-- `src/train/tune_rho.py` - Hyperparameter optimization script
-- `data/tuning/rho_tuning_results_*.csv` - Full tuning results
-- Evidence demonstrates correction is unnecessary for modern EPL
 
 ---
 
@@ -469,14 +392,14 @@ EPL-Predictor/
 
 ## Acknowledgments
 
-- **Methodology**: 
-  - [Predicting Football Results with Statistical Modelling](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/) by Artiebits - Foundation for Poisson regression approach to football prediction
+- **Methodology**:
+  - [Predicting Football Results with Statistical Modelling](https://artiebits.com/blog/predicting-football-results-with-statistical-modelling/) by Artiebits - Foundation for Poisson regression approach
   - [Improving Poisson Model Using Time-Weighting](https://artiebits.com/blog/improving-poisson-model-using-time-weighting/) by Artiebits - Dixon-Coles time-weighting enhancement
-  - Dixon & Coles (1997) - Original time-weighting and dependency correction framework
-- **Data Sources**: 
-  - [football-data.co.uk](https://www.football-data.co.uk/) for historical match results (2005-present)
-  - [Premier League API](https://footballapi.pulselive.com/) for upcoming fixtures
-- **Statistical Foundation**: 
+  - Dixon & Coles (1997) - Original time-weighting framework
+- **Data Sources**:
+  - [football-data.co.uk](https://www.football-data.co.uk/) - Historical match results (2005-2025)
+  - [Premier League API](https://footballapi.pulselive.com/) - Upcoming fixtures
+- **Statistical Foundation**:
   - Dixon & Coles (1997) - "Modelling Association Football Scores and Inefficiencies in the Football Betting Market"
   - Maher (1982) - Original Poisson football model
   - Karlis & Ntzoufras (2003) - Bivariate Poisson approaches
@@ -485,13 +408,13 @@ EPL-Predictor/
 
 ## Future Enhancements
 
-Potential improvements based on football prediction literature:
+Potential improvements based on football prediction research:
 
-1. ~~**Dixon-Coles dependency correction**~~ - ✅ Tested: No improvement on modern EPL data (see investigation above)
+1. ~~**Dixon-Coles dependency correction**~~ - ✅ Tested: No improvement on modern EPL (see investigation above)
 2. **Rolling form features** - Recent goals scored/conceded windows
-3. **xG integration** - Expected goals data from Understat
+3. **xG integration** - Expected goals data from Understat/FBref
 4. **Lineup-based predictions** - Player-level xG contributions
-5. **Ensemble models** - Combine multiple approaches
+5. **Ensemble models** - Combine multiple prediction approaches
 6. **Betting strategies** - Kelly Criterion optimal stakes
 
 ---
