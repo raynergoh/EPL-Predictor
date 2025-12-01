@@ -127,14 +127,21 @@ if __name__ == "__main__":
     save_epl_data()
 
 
-def fetch_and_update_data(data_path: str = 'data/raw/epl_historical_results.csv') -> bool:
+def fetch_and_update_data(data_path: str = 'data/raw/epl_historical_results.csv', 
+                         force_fetch: bool = False,
+                         cache_hours: float = 24.0) -> bool:
     """
     Fetch latest EPL data from football-data.co.uk and update historical file.
     
     This checks the existing file first, then only fetches new data if needed.
+    Uses intelligent caching to avoid unnecessary fetches:
+    - If file was updated within cache_hours (default 24h), skip fetch
+    - This prevents repeated fetches when football-data.co.uk hasn't updated yet
     
     Args:
         data_path: Path to historical results CSV
+        force_fetch: Force fetch even if cache is valid (default: False)
+        cache_hours: Hours to cache data before re-fetching (default: 24)
         
     Returns:
         True if data was updated, False if no update needed or fetch failed
@@ -144,19 +151,21 @@ def fetch_and_update_data(data_path: str = 'data/raw/epl_historical_results.csv'
     
     try:
         # Check if we need to fetch at all
-        needs_fetch = True
-        if data_file.exists():
-            # Check last modified time - skip if updated recently (within last hour)
+        if data_file.exists() and not force_fetch:
+            # Check file modification time - this is when we last successfully fetched
             import time
             file_age_hours = (time.time() - data_file.stat().st_mtime) / 3600
             
-            if file_age_hours < 1.0:
-                logger.info(f"Data file updated {file_age_hours:.1f} hours ago, skipping fetch")
-                print(f"✓ Data file recently updated ({file_age_hours:.1f}h ago), skipping fetch")
-                
+            # Skip fetch if file was modified within cache window
+            # This prevents hammering football-data.co.uk when data hasn't changed
+            if file_age_hours < cache_hours:
                 old_df = pd.read_csv(data_path, dtype={'Season': str})
-                latest_date = old_df['Date'].max()
-                print(f"  {len(old_df)} matches, latest: {latest_date}")
+                old_df['Date'] = pd.to_datetime(old_df['Date'])
+                latest_match_date = old_df['Date'].max()
+                
+                logger.info(f"Data file updated {file_age_hours:.1f} hours ago (< {cache_hours}h cache), skipping fetch")
+                print(f"✓ Data file recently fetched ({file_age_hours:.1f}h ago), skipping re-fetch")
+                print(f"  {len(old_df)} matches, latest: {latest_match_date.date()}")
                 return False
         
         # Fetch data from football-data.co.uk
@@ -185,7 +194,8 @@ def fetch_and_update_data(data_path: str = 'data/raw/epl_historical_results.csv'
             else:
                 logger.info(f"Data unchanged: {new_count} matches")
                 print(f"✓ Data already up to date ({new_count} matches)")
-                # Don't save - no changes needed
+                # Touch file to update timestamp - prevents re-fetching for cache_hours
+                data_file.touch()
                 latest_date = old_df['Date'].max()
                 print(f"  Latest match: {latest_date}")
         else:

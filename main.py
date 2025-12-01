@@ -87,6 +87,17 @@ def main():
         action='store_true',
         help='Force full model retraining even if not needed'
     )
+    parser.add_argument(
+        '--force-fetch',
+        action='store_true',
+        help='Force data fetch even if cache is valid'
+    )
+    parser.add_argument(
+        '--cache-hours',
+        type=float,
+        default=24.0,
+        help='Hours to cache data before re-fetching (default: 24)'
+    )
     
     args = parser.parse_args()
     logger = setup_logging()
@@ -102,7 +113,10 @@ def main():
         logger.info("STEP 1: Fetching latest match results...")
         
         try:
-            updated = fetch_and_update_data()
+            updated = fetch_and_update_data(
+                force_fetch=args.force_fetch,
+                cache_hours=args.cache_hours
+            )
         except Exception as e:
             logger.error(f"Fatal error fetching data: {e}")
             print(f"❌ Cannot proceed without data file")

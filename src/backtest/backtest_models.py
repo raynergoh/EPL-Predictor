@@ -335,7 +335,9 @@ class PoissonBacktester:
                     test_start_idx=test_start,
                     test_end_idx=test_end,
                     xi=model_config['xi'],
-                    use_time_weighting=model_config['use_time_weighting']
+                    use_time_weighting=model_config['use_time_weighting'],
+                    use_dc_correction=model_config.get('use_dc_correction', False),
+                    rho=model_config.get('rho', -0.040)
                 )
                 
                 if result is None:

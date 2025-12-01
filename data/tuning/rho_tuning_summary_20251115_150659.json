@@ -1,0 +1,8 @@
+{
+  "best_rho": -0.04,
+  "best_log_likelihood": -0.9961892160917669,
+  "best_std": 0.020591954134654682,
+  "n_folds": 5,
+  "timestamp": "20251115_150659",
+  "total_rho_values_tested": 26
+}

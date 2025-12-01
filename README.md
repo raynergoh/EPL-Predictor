@@ -359,6 +359,74 @@ The lower optimal value suggests that with 20 years of data, retaining more hist
 
 ---
 
+## Dixon-Coles Dependency Correction Investigation
+
+### Why We Didn't Implement It
+
+After thorough investigation, we decided **NOT** to implement Dixon-Coles dependency correction despite it being a well-known enhancement in football prediction literature. Here's why:
+
+### The Problem Dixon-Coles Tries to Solve
+
+Standard Poisson models assume home and away goals are **independent** events. However, Dixon & Coles (1997) showed that certain low-scoring matches occur more/less frequently than Poisson predicts:
+
+- **0-0 draws** happen more often (defensive, cagey matches)
+- **1-0 and 0-1** results happen less often
+- **1-1 draws** happen more often than expected
+
+The Dixon-Coles **tau (τ) function** adjusts probabilities for these four specific scorelines using a dependency parameter **ρ** (rho):
+
+```
+τ(0,0) = 1 - λ_home × λ_away × ρ
+τ(1,0) = 1 + λ_away × ρ
+τ(0,1) = 1 + λ_home × ρ
+τ(1,1) = 1 - ρ
+τ(i,j) = 1.0  for all other scorelines
+```
+
+Typical values in literature: **ρ ≈ -0.13 to -0.18**
+
+### Our Testing Methodology
+
+We implemented the full Dixon-Coles correction and tested it rigorously:
+
+1. **Hyperparameter Tuning**: Tested ρ values from -0.25 to 0.00 (step 0.01) using 5-fold time-series cross-validation
+2. **Optimal ρ Found**: **-0.040** (much weaker than Dixon & Coles' -0.13)
+3. **Backtesting**: Compared 3 models on 5 years of out-of-sample data (2013-2018)
+
+### Results: Minimal Impact on Modern EPL Data
+
+| Model | Accuracy | Brier Score | Log-Likelihood |
+|-------|----------|-------------|----------------|
+| Baseline (No weighting) | 51.84% | 0.2014 | -2.9819 |
+| Time-Weighted (ξ=0.003) | **51.95%** | **0.1996** | **-2.9620** |
+| Time-Weighted + DC (ρ=-0.040) | 51.95% | 0.1996 | -2.9620 |
+
+**Key Finding**: Dixon-Coles correction with optimal ρ=-0.040 provided **ZERO improvement** over time-weighting alone.
+
+### Why Such Minimal Impact?
+
+1. **Very Weak Dependency**: Optimal ρ=-0.040 vs literature's -0.13 suggests modern EPL has much weaker goal dependency
+2. **Negligible Difference**: ρ=-0.040 vs ρ=0.000 differs by only 0.0002 in log-likelihood
+3. **Modern Football**: Higher scoring, more attacking play than 1990s data may reduce low-score correlation
+4. **Time-Weighting Captures It**: Recent-match weighting may already account for team tactical tendencies
+
+### Evidence
+
+![ρ Tuning Curve](data/tuning/charts/rho_tuning_curve.png)
+
+The tuning curve shows log-likelihood is nearly flat between ρ=-0.05 and ρ=0.00, indicating minimal dependency in modern data.
+
+### Conclusion
+
+For this dataset (2005-2025 EPL), **Dixon-Coles dependency correction adds unnecessary complexity for almost zero gain**. We keep the simpler time-weighted Poisson model, which achieves 51.95% accuracy without the correction.
+
+**Implementation retained for research**:
+- `src/train/tune_rho.py` - Hyperparameter optimization script
+- `data/tuning/rho_tuning_results_*.csv` - Full tuning results
+- Evidence demonstrates correction is unnecessary for modern EPL
+
+---
+
 ## Project Structure
 
 ```
@@ -419,7 +487,7 @@ EPL-Predictor/
 
 Potential improvements based on football prediction literature:
 
-1. **Dixon-Coles dependency correction** - Adjust for low-scoring draw correlations
+1. ~~**Dixon-Coles dependency correction**~~ - ✅ Tested: No improvement on modern EPL data (see investigation above)
 2. **Rolling form features** - Recent goals scored/conceded windows
 3. **xG integration** - Expected goals data from Understat
 4. **Lineup-based predictions** - Player-level xG contributions

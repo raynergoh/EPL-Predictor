@@ -78,6 +78,7 @@ class PoissonPredictor:
         
         self.model = None
         self.coefficients = None
+        
         self.load_model()
         
         logger.info("✓ PoissonPredictor initialized")
