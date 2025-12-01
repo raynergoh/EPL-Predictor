@@ -332,6 +332,10 @@ The HTML report opens automatically in your browser with:
 - 📈 Win/Draw/Loss probabilities with visual bars
 - ⚽ Most likely scoreline + alternatives
 
+**Example Snippet of the Report:**
+
+![Match Predictions Report](docs/images/HTML_report.png)
+
 **Manual access:**
 ```bash
 open data/weekly/predictions_mw*_*.html
